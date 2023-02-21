@@ -19,9 +19,11 @@ void LinuxMain();
 void WindowsMain();
 #endif
 
+unsigned long long compareCounter, assignmentCounter; // global variables to keep track of number of comparisons and assignment operations
+
 int main()
 {
-	generateRandomNumbers();
+	// generateRandomNumbers();
 #ifdef _WIN32
 	WindowsMain();
 #else
@@ -32,17 +34,24 @@ int main()
 
 void selectionSort(int *arr, int len)
 {
+	compareCounter = 0;
+	assignmentCounter = 0;
 	int min_i, temp;
 	for (int i = 0; i < len; i++)
 	{
 		min_i = i;
 		for (int j = i + 1; j < len; j++)
 		{
+			compareCounter++;
 			if (arr[j] < arr[min_i])
+			{
 				min_i = j;
+				assignmentCounter++;
+			}
 		}
 		if (i != min_i)
 		{
+			assignmentCounter += 3;
 			temp = arr[min_i];
 			arr[min_i] = arr[i];
 			arr[i] = temp;
@@ -52,6 +61,8 @@ void selectionSort(int *arr, int len)
 
 void insertionSort(int *arr, int len)
 {
+	compareCounter = 0;
+	assignmentCounter = 0;
 	int key, pos;
 	for (int i = 1; i < len; i++)
 	{
@@ -59,15 +70,21 @@ void insertionSort(int *arr, int len)
 		pos = 0;
 		for (int j = i - 1; j >= 0; j--)
 		{
+			compareCounter++;
 			if (arr[j] > key)
+			{
 				arr[j + 1] = arr[j];
+				assignmentCounter++;
+			}
 			else
 			{
 				pos = j + 1;
+				assignmentCounter++;
 				break;
 			}
 		}
 		arr[pos] = key;
+		assignmentCounter++;
 	}
 }
 
@@ -92,11 +109,12 @@ void WindowsMain()
 {
 	FILE *rand_num = fopen("rand_num.txt", "r");
 	FILE *dest = fopen("output.txt", "w");
-	fprintf(dest, "size   | selection-sort-time | insertion-sort-time\n");
+	fprintf(dest, "size   | selection-sort-time | insertion-sort-time | selection-sort-comparisons | insertion-sort-comparisons | selection-sort-assignments | insertion-sort-assignments\n");
 	double time1, time2;
+	unsigned long long selectionSortComparisons, insertionSortComparisons, selectionSortAssignments, insertionSortAssignments;
 	LARGE_INTEGER clock_freq, start, end;
 	QueryPerformanceFrequency(&clock_freq);
-	for (int size = 100; size <= 100000; size += 100)
+	for (int size = 52000; size <= 52000; size += 100)
 	{
 		int arr1[size];
 		int arr2[size];
@@ -109,13 +127,17 @@ void WindowsMain()
 		selectionSort(arr1, size);
 		QueryPerformanceCounter(&end);
 		time1 = (double)(end.QuadPart - start.QuadPart) * 1.0 / clock_freq.QuadPart;
+		selectionSortComparisons = compareCounter;
+		selectionSortAssignments = assignmentCounter;
 
 		QueryPerformanceCounter(&start);
 		insertionSort(arr2, size);
 		QueryPerformanceCounter(&end);
 		time2 = (double)(end.QuadPart - start.QuadPart) * 1.0 / clock_freq.QuadPart;
+		insertionSortComparisons = compareCounter;
+		insertionSortAssignments = assignmentCounter;
 
-		fprintf(dest, "%6d | %19f | %19f\n", size, time1, time2);
+		fprintf(dest, "%6d | %19f | %19f | %26llu | %26llu | %26llu | %26llu\n", size, time1, time2, selectionSortComparisons, insertionSortComparisons, selectionSortAssignments, insertionSortAssignments);
 		printf("Size %d done!\n", size);
 	}
 	fclose(rand_num);
@@ -127,9 +149,10 @@ void LinuxMain()
 {
 	FILE *rand_num = fopen("rand_num.txt", "r");
 	FILE *dest = fopen("output.txt", "w");
-	fprintf(dest, "size   | selection-sort-time | insertion-sort-time\n");
+	fprintf(dest, "size   | selection-sort-time | insertion-sort-time | selection-sort-comparisons | insertion-sort-comparisons | selection-sort-assignments | insertion-sort-assignments\n");
 	double time1, time2;
 	clock_t start, end;
+	unsigned long long selectionSortComparisons, insertionSortComparisons, selectionSortAssignments, insertionSortAssignments;
 	for (int size = 100; size <= 100000; size += 100)
 	{
 		int arr1[size];
@@ -143,13 +166,17 @@ void LinuxMain()
 		selectionSort(arr1, size);
 		end = clock();
 		time1 = (double)(end - start) * 1.0 / CLOCKS_PER_SEC;
+		selectionSortComparisons = compareCounter;
+		selectionSortAssignments = assignmentCounter;
 
 		start = clock();
 		insertionSort(arr2, size);
 		end = clock();
 		time2 = (double)(end - start) * 1.0 / CLOCKS_PER_SEC;
+		insertionSortComparisons = compareCounter;
+		insertionSortAssignments = assignmentCounter;
 
-		fprintf(dest, "%6d | %19f | %19f\n", size, time1, time2);
+		fprintf(dest, "%6d | %19f | %19f | %26llu | %26llu | %26llu | %26llu\n", size, time1, time2, selectionSortComparisons, insertionSortComparisons, selectionSortAssignments, insertionSortAssignments);
 		printf("Size %d done!\n", size);
 	}
 	fclose(rand_num);
